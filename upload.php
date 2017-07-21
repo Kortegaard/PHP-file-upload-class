@@ -118,6 +118,33 @@ class Upload {
 	protected $root;
 
 	/**
+	*	Array of mine types
+	*/
+	protected $mime_types = array(
+
+		'txt' => 'text/plain', 'htm' => 'text/html', 'html' => 'text/html', 'php' => 'text/html', 'css' => 'text/css', 'js' => 'application/javascript', 'json' => 'application/json', 'xml' => 'application/xml', 'swf' => 'application/x-shockwave-flash', 'flv' => 'video/x-flv',
+
+		// images
+		'png' => 'image/png', 'jpe' => 'image/jpeg', 'jpeg' => 'image/jpeg', 'jpg' => 'image/jpeg', 'gif' => 'image/gif', 'bmp' => 'image/bmp', 'ico' => 'image/vnd.microsoft.icon', 'tiff' => 'image/tiff', 'tif' => 'image/tiff', 'svg' => 'image/svg+xml', 'svgz' => 'image/svg+xml',
+
+		// archives
+		'zip' => 'application/zip', 'rar' => 'application/x-rar-compressed', 'exe' => 'application/x-msdownload', 'msi' => 'application/x-msdownload', 'cab' => 'application/vnd.ms-cab-compressed',
+
+		// audio/video
+		'mp3' => 'audio/mpeg', 'qt' => 'video/quicktime', 'mov' => 'video/quicktime',
+
+		// adobe
+		'pdf' => 'application/pdf', 'psd' => 'image/vnd.adobe.photoshop', 'ai' => 'application/postscript', 'eps' => 'application/postscript', 'ps' => 'application/postscript',
+
+		// ms office
+		'doc' => 'application/msword', 'rtf' => 'application/rtf', 'xls' => 'application/vnd.ms-excel', 'ppt' => 'application/vnd.ms-powerpoint',
+
+		// open office
+		'odt' => 'application/vnd.oasis.opendocument.text', 'ods' => 'application/vnd.oasis.opendocument.spreadsheet',
+	);
+
+
+	/**
 	 * Return upload object
 	 *
 	 * $destination		= 'path/to/your/file/destination/folder';
@@ -162,6 +189,10 @@ class Upload {
 
 	}
 
+	public function set_root($root){
+         $this->root = $root;
+  }
+
 	/**
 	 * Set target filename
 	 *
@@ -183,7 +214,7 @@ class Upload {
 	public function upload($filename = '') {
 
 		$this->set_filename($filename);
-		
+
 		if ($this->check()) {
 
 			$this->save();
@@ -419,6 +450,19 @@ class Upload {
 
 	}
 
+	/**
+     * Allow file types, input could be something like ['jpg', 'png', 'pdf']
+     *
+     * @param $types_allowed
+     */
+    public function set_allowed_file_types($types_allowed){
+        //mime only allowed keys
+        $maskedArr = array_intersect_key($this->mime_types, array_flip($types_allowed));
+        //Array of mimes
+        $this->set_allowed_mime_types(array_values($maskedArr));
+    }
+
+
 
 	/**
 	 * File size validation callback
@@ -468,6 +512,12 @@ class Upload {
 
 	}
 
+	public function get_original_file_extension(){
+	        $tmp = explode(".", $this->file_post["name"]);
+	        $ending = end($tmp);
+
+	        return in_array($ending, array_keys($this->mime_types)) ? $ending : false;
+}
 
 	/**
 	 * Set file array
@@ -581,7 +631,8 @@ class Upload {
 	protected function create_new_filename() {
 
 		$filename = sha1(mt_rand(1, 9999) . $this->destination . uniqid()) . time();
-		$this->set_filename($filename);
+        $extension = $this->get_original_file_extension();
+        $this->set_filename($filename . ($extension ? "." . $extension : ""));
 
 	}
 
